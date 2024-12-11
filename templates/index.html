@@ -1,11 +1,29 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hola Mundo</title>
+    <title>Memes</title>
 </head>
 <body>
-    <h1>¡Hola Mundo!</h1>
+    <h1>Lista de Memes</h1>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Título</th>
+                <th>URL</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for meme in memes %}
+            <tr>
+                <td>{{ meme[0] }}</td> <!-- ID -->
+                <td>{{ meme[1] }}</td> <!-- Título -->
+                <td><a href="{{ meme[2] }}" target="_blank">{{ meme[2] }}</a></td> <!-- URL -->
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </body>
 </html>

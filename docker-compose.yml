@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  # Servicio para la aplicación Flask
+  app:
+    build: .
+    container_name: starter-aws-app
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    depends_on:
+      - db
+    networks:
+      - app-network
+
+  # Servicio para PostgreSQL
+  db:
+    image: postgres:13
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: your_db_name
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+# Volúmenes para persistencia de datos
+volumes:
+  postgres_data:
+
+# Redes para conectar los contenedores
+networks:
+  app-network:
+    driver: bridge

@@ -1,6 +1,6 @@
 from flask import Flask, render_template
 from dotenv import load_dotenv
-from test.test_connections import test_s3_connection, test_db_connection  # Importación absoluta
+from services.meme_service import get_all_memes
 
 load_dotenv()
 
@@ -8,9 +8,9 @@ app = Flask(__name__)
 
 @app.route('/')
 def home():
-    test_s3_connection()
-    test_db_connection()
-    return render_template('index.html')
+    # Obtener los memes desde la base de datos
+    memes = get_all_memes()
+    return render_template('index.html', memes=memes)
 
 # Ejecutar la aplicación
 if __name__ == '__main__':
