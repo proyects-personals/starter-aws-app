@@ -1,29 +1,16 @@
+<!-- /index.html (Archivo principal de entrada) -->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Memes</title>
+    <title>MemesApp</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.0.0/dist/tailwind.min.css" rel="stylesheet">
 </head>
 <body>
-    <h1>Lista de Memes</h1>
-    <table border="1">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Título</th>
-                <th>URL</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for meme in memes %}
-            <tr>
-                <td>{{ meme[0] }}</td> <!-- ID -->
-                <td>{{ meme[1] }}</td> <!-- Título -->
-                <td><a href="{{ meme[2] }}" target="_blank">{{ meme[2] }}</a></td> <!-- URL -->
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <h1 class="text-4xl font-bold text-center mt-10">Bienvenido a MemesApp</h1>
+    <div class="text-center mt-4">
+        <a href="memes" class="bg-blue-600 text-white px-6 py-3 rounded-md">Ir a la Página Principal</a>
+    </div>
 </body>
 </html>

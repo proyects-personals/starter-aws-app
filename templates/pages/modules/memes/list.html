@@ -1,0 +1,34 @@
+{% extends 'pages/layout/navbar.html' %}
+{% block content %}
+<div class="container">
+    <h1>Lista de Memes</h1>
+    {% if memes %}
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Descripción</th>
+                <th>Usuario</th>
+                <th>Ruta</th>
+                <th>Fecha de Carga</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for meme in memes %}
+            <tr>
+                <td>{{ meme.id }}</td>
+                <td>{{ meme.descripcion }}</td>
+                <td>{{ meme.usuario }}</td>
+                <td>
+                    <a href="{{ meme.ruta }}" target="_blank">Ver Imagen</a>
+                </td>
+                <td>{{ meme.cargada }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No hay memes disponibles.</p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,20 @@
+<!-- templates/modules/memes/crear.html -->
+{% extends 'pages/layout/navbar.html' %}
+
+{% block title %}Crear Meme - MemesApp{% endblock %}
+
+{% block content %}
+    <h2 class="text-3xl font-bold">Crear Meme</h2>
+    <form>
+        <label for="descripcion" class="block text-xl">Descripción</label>
+        <input type="text" id="descripcion" class="p-2 border border-gray-300 rounded mt-2 mb-4 w-full">
+
+        <label for="ruta" class="block text-xl">Ruta de imagen</label>
+        <input type="text" id="ruta" class="p-2 border border-gray-300 rounded mt-2 mb-4 w-full">
+
+        <label for="cargada" class="block text-xl">Fecha de carga</label>
+        <input type="datetime-local" id="cargada" class="p-2 border border-gray-300 rounded mt-2 mb-4 w-full">
+
+        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md">Crear Meme</button>
+    </form>
+{% endblock %}

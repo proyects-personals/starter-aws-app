@@ -1,17 +1,13 @@
-from flask import Flask, render_template
+# app.py
+from flask import Flask
 from dotenv import load_dotenv
-from services.meme_service import get_all_memes
+from modules.memes.routes import memes_routes
 
 load_dotenv()
 
 app = Flask(__name__)
 
-@app.route('/')
-def home():
-    # Obtener los memes desde la base de datos
-    memes = get_all_memes()
-    return render_template('index.html', memes=memes)
+app.register_blueprint(memes_routes, url_prefix='/app')
 
-# Ejecutar la aplicación
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
