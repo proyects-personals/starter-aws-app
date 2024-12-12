@@ -1,8 +1,11 @@
 from connections.db_connection import create_db_connection
+# meme_service.py
+from services.s3_service import get_images_from_s3
+
 
 def get_all_memes():
     """
-    Obtiene todos los registros de la tabla 'memes' como una lista de diccionarios.
+    Obtiene todos los memes de la base de datos y les asigna la URL completa de la imagen desde S3.
     """
     connection = create_db_connection()
     if connection is None:
@@ -12,10 +15,12 @@ def get_all_memes():
         with connection.cursor() as cursor:
             cursor.execute("SELECT * FROM memes;")
             rows = cursor.fetchall()
-            # Nombres de las columnas de la tabla
             columns = [desc[0] for desc in cursor.description]
-            # Convertir cada fila (tupla) en un diccionario
             memes = [dict(zip(columns, row)) for row in rows]
+            
+            # Aquí obtenemos la URL completa para cada imagen desde S3
+            for meme in memes:
+                meme['ruta'] = get_images_from_s3(meme['ruta'])  # Asumiendo que 'ruta' contiene la ruta en S3
             return memes
     except Exception as e:
         print(f"Error al obtener los memes: {e}")

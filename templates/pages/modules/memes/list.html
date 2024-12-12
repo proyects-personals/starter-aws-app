@@ -3,30 +3,23 @@
 <div class="container">
     <h1>Lista de Memes</h1>
     {% if memes %}
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Descripción</th>
-                <th>Usuario</th>
-                <th>Ruta</th>
-                <th>Fecha de Carga</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for meme in memes %}
-            <tr>
-                <td>{{ meme.id }}</td>
-                <td>{{ meme.descripcion }}</td>
-                <td>{{ meme.usuario }}</td>
-                <td>
-                    <a href="{{ meme.ruta }}" target="_blank">Ver Imagen</a>
-                </td>
-                <td>{{ meme.cargada }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="row">
+        {% for meme in memes %}
+        <div class="col-md-4">
+            <div class="card" style="width: 18rem;">
+                <!-- Imagen del Meme -->
+                <img src="{{ meme.ruta }}" class="card-img-top" alt="Imagen del Meme">
+                <div class="card-body">
+                    <h5 class="card-title">ID: {{ meme.id }}</h5>
+                    <p class="card-text">{{ meme.descripcion }}</p>
+                    <p class="card-text"><strong>Usuario:</strong> {{ meme.usuario }}</p>
+                    <p class="card-text"><strong>Fecha de Carga:</strong> {{ meme.cargada }}</p>
+                    <a href="{{ meme.ruta }}" class="btn btn-primary" target="_blank">Ver Imagen</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
     {% else %}
     <p>No hay memes disponibles.</p>
     {% endif %}
