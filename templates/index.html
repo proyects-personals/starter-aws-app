@@ -6,25 +6,44 @@
 <div class="container" style="margin: 32px;">
     {% include 'components/search_component.html' %}
     <h1>Lista de Memes</h1>
+    
     {% if memes %}
-    <div class="row row-cols-1 row-cols-md-5" style="gap: 16px;">
-        {% for meme in memes %}
-        <div class="col">
-            <div class="card" style="width: 100%; margin-bottom: 16px;">
-                <img src="{{ meme.ruta }}" class="card-img-top" alt="Imagen del Meme" style="height: 200px; object-fit: cover;">
-                <div class="card-body">
-                    <h5 class="card-title">ID: {{ meme.id }}</h5>
-                    <p class="card-text">{{ meme.descripcion }}</p>
-                    <p class="card-text"><strong>Usuario:</strong> {{ meme.usuario }}</p>
-                    <p class="card-text"><strong>Fecha de Carga:</strong> {{ meme.cargada }}</p>
-                    <a href="{{ meme.ruta }}" class="btn btn-primary" target="_blank">Ver Imagen</a>
+        <div class="row row-cols-1 row-cols-md-5" style="gap: 16px;">
+            {% for meme in memes %}
+                <div class="col">
+                    <div class="card" style="width: 100%; margin-bottom: 16px;">
+                        <img src="{{ meme.ruta }}" class="card-img-top" alt="Imagen del Meme" style="height: 200px; object-fit: cover;">
+                        <div class="card-body">
+                            <!-- Mostrar las etiquetas como chips -->
+                            <p class="card-text">
+                                <strong>Etiquetas:</strong>
+                                {% if meme.etiquetas %}
+                                    <div style="display: flex; flex-wrap: wrap;">
+                                        {% for etiqueta in meme.etiquetas %}
+                                            <span class="badge badge-pill" style="margin-right: 5px; background-color: {{ ['#007bff', '#28a745', '#ffc107', '#17a2b8'][loop.index0 % 4] }}; color: white; padding: 5px 10px; border-radius: 20px;">
+                                                {{ etiqueta }}
+                                            </span>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <span>No hay etiquetas.</span>
+                                {% endif %}
+                            </p>
+                            <p class="card-text"><strong>Descripción:</strong> {{ meme.descripcion }}</p>
+                            <p class="card-text"><strong>Usuario:</strong> {{ meme.usuario }}</p>
+                            <p class="card-text"><strong>Fecha de Carga:</strong> {{ meme.cargada }}</p>
+                            <a href="{{ meme.ruta }}" class="btn btn-primary" target="_blank">Ver Imagen</a>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            {% endfor %}
         </div>
-        {% endfor %}
-    </div>
     {% else %}
-    <p>No hay memes disponibles.</p>
+        {% if request.args.get('search') %}
+            <p>No se encontraron memes para tu búsqueda.</p>
+        {% else %}
+            <p>No hay memes disponibles.</p>
+        {% endif %}
     {% endif %}
 </div>
 {% endblock %}

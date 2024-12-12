@@ -6,7 +6,7 @@ from datetime import datetime
 
 def get_all_memes():
     """
-    Obtiene todos los memes de la base de datos y les asigna la URL completa de la imagen desde S3.
+    Obtiene todos los memes de la base de datos, sus etiquetas y confianza, y les asigna la URL completa de la imagen desde S3.
     """
     connection = create_db_connection()
     if connection is None:
@@ -14,19 +14,128 @@ def get_all_memes():
 
     try:
         with connection.cursor() as cursor:
-            cursor.execute("SELECT * FROM memes;")
+            query = """
+                SELECT 
+                    memes.id AS meme_id,
+                    memes.descripcion,
+                    memes.usuario,
+                    memes.ruta AS meme_ruta,
+                    memes.cargada,
+                    etiquetas.etiqueta,
+                    etiquetas.confianza
+                FROM memes
+                LEFT JOIN etiquetas ON memes.id = etiquetas.meme_id;
+            """
+            cursor.execute(query)
             rows = cursor.fetchall()
-            columns = [desc[0] for desc in cursor.description]
-            memes = [dict(zip(columns, row)) for row in rows]
 
-            for meme in memes:
-                meme['ruta'] = get_images_from_s3(meme['ruta'])
+            columns = [desc[0] for desc in cursor.description]
+            
+            memes = []
+            for row in rows:
+                meme_data = dict(zip(columns, row))
+                meme_id = meme_data["meme_id"]
+                
+                meme = next((m for m in memes if m["meme_id"] == meme_id), None)
+                
+                if meme is None:
+                    meme = {
+                        "meme_id": meme_id,
+                        "descripcion": meme_data["descripcion"],
+                        "usuario": meme_data["usuario"],
+                        "ruta": get_images_from_s3(meme_data["meme_ruta"]),
+                        "cargada": meme_data["cargada"],
+                        "etiquetas": [],
+                        "confianza": None
+                    }
+                    memes.append(meme)
+                
+                if meme_data["etiqueta"]:
+                    meme["etiquetas"].append(meme_data["etiqueta"])
+                
+                if meme_data["confianza"] is not None:
+                    meme["confianza"] = meme_data["confianza"]
+
             return memes
     except Exception as e:
         print(f"Error al obtener los memes: {e}")
         return []
     finally:
         connection.close()
+
+
+def search_memes(query):
+    """
+    Filtra los memes según los criterios de búsqueda proporcionados.
+    """
+    connection = create_db_connection()
+    if connection is None:
+        return []
+
+    try:
+        with connection.cursor() as cursor:
+            base_query = """
+                SELECT 
+                    memes.id AS meme_id,
+                    memes.descripcion,
+                    memes.usuario,
+                    memes.ruta AS meme_ruta,
+                    memes.cargada,
+                    etiquetas.etiqueta,
+                    etiquetas.confianza
+                FROM memes
+                LEFT JOIN etiquetas ON memes.id = etiquetas.meme_id
+                WHERE
+                    (memes.descripcion LIKE %s OR memes.usuario LIKE %s OR etiquetas.etiqueta LIKE %s)
+            """
+
+            params = [
+                f"%{query['search']}%",
+                f"%{query['search']}%",
+                f"%{query['search']}%"
+            ]
+            if query.get('confianza'):
+                base_query += " AND etiquetas.confianza = %s"
+                params.append(query['confianza'])
+
+            cursor.execute(base_query, params)
+
+            rows = cursor.fetchall()
+            columns = [desc[0] for desc in cursor.description]
+
+            memes = []
+            for row in rows:
+                meme_data = dict(zip(columns, row))
+                meme_id = meme_data["meme_id"]
+                print(f"Procesando meme con id: {meme_id}")
+
+                meme = next((m for m in memes if m["meme_id"] == meme_id), None)
+
+                if meme is None:
+                    meme = {
+                        "meme_id": meme_id,
+                        "descripcion": meme_data["descripcion"],
+                        "usuario": meme_data["usuario"],
+                        "ruta": get_images_from_s3(meme_data["meme_ruta"]),
+                        "cargada": meme_data["cargada"],
+                        "etiquetas": [],
+                        "confianza": None
+                    }
+                    memes.append(meme)
+
+                if meme_data["etiqueta"]:
+                    meme["etiquetas"].append(meme_data["etiqueta"])
+
+                if meme_data["confianza"] is not None:
+                    meme["confianza"] = meme_data["confianza"]
+            return memes
+    except Exception as e:
+        return []
+    finally:
+        connection.close()
+
+
+
 
 
 def get_meme_by_id(meme_id):

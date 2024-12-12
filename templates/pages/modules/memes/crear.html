@@ -1,45 +1,177 @@
-<!-- templates/modules/memes/crear.html -->
-{% extends 'pages/layout/navbar.html' %}
+{% extends 'pages/layout/navbar.html' %} {% block title %}Crear Meme -
+MemesApp{% endblock %} {% block content %}
+<div class="container mt-5">
+  <h2 class="title">Crear Meme</h2>
 
-{% block title %}Crear Meme - MemesApp{% endblock %}
+  <!-- Formulario para crear un meme -->
+  <form
+    action="{{ url_for('memes_routes.crear') }}"
+    method="POST"
+    enctype="multipart/form-data"
+    class="form"
+  >
+    <!-- Fila de Descripción y Usuario -->
+    <div class="row mb-3">
+      <!-- Descripción del meme -->
+      <div class="col-md-6">
+        <div class="form-group">
+          <label for="usuario">Usuario</label>
+          <input
+            type="text"
+            id="usuario"
+            name="usuario"
+            class="form-control"
+            required
+          />
+        </div>
+      </div>
 
-{% block content %}
-    <h2 class="text-3xl font-bold">Crear Meme</h2>
+      <!-- Usuario del meme -->
+      <div class="col-md-6">
+        <div class="form-group">
+          <label for="descripcion">Descripción</label>
+          <input
+            type="text"
+            id="descripcion"
+            name="descripcion"
+            class="form-control"
+            required
+          />
+        </div>
+      </div>
+    </div>
 
-    <!-- Formulario para crear un meme -->
-    <form action="{{ url_for('memes_routes.crear') }}" method="POST" enctype="multipart/form-data">
-        <!-- Mensajes flash para mostrar éxito o error -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <ul class="flashes">
-                    {% for category, message in messages %}
-                        <li class="{{ category }}">{{ message }}</li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-        {% endwith %}
+    <!-- Etiquetas del meme -->
+    <div class="form-group mb-3">
+      <label for="etiquetas">Etiquetas (separe por comas cada etiqueta)</label>
+      <div id="etiquetas-container" class="d-flex flex-wrap mb-2">
+        <!-- Aquí aparecerán los chips -->
+      </div>
+      <input
+        type="text"
+        id="etiquetas"
+        name="etiquetas"
+        class="form-control"
+        oninput="handleTagInput(event)"
+        placeholder="Añadir etiquetas"
+        required
+      />
+    </div>
 
-        <!-- Descripción del meme -->
-        <label for="descripcion" class="block text-xl">Descripción</label>
-        <input type="text" id="descripcion" name="descripcion" class="p-2 border border-gray-300 rounded mt-2 mb-4 w-full" required>
+    <!-- Confianza de las etiquetas -->
+    <div class="form-group mb-3">
+      <label for="confianza"
+        >Confianza (valores entre 0 y 100, separados por coma)</label
+      >
+      <input
+        type="text"
+        id="confianza"
+        name="confianza"
+        class="form-control"
+        required
+      />
+    </div>
 
-        <!-- Usuario del meme -->
-        <label for="usuario" class="block text-xl">Usuario</label>
-        <input type="text" id="usuario" name="usuario" class="p-2 border border-gray-300 rounded mt-2 mb-4 w-full" required>
+    <!-- Imagen del meme -->
+    <div class="form-group mb-3">
+      <label for="imagen">Subir Imagen</label>
+      <input
+        type="file"
+        id="imagen"
+        name="imagen"
+        class="form-control"
+        accept="image/*"
+        required
+      />
+    </div>
 
-        <!-- Imagen del meme -->
-        <label for="imagen" class="block text-xl">Subir Imagen</label>
-        <input type="file" id="imagen" name="imagen" class="p-2 border border-gray-300 rounded mt-2 mb-4 w-full" accept="image/*" required>
+    <!-- Mensajes flash para mostrar éxito o error -->
+    {% with messages = get_flashed_messages(with_categories=true) %} {% if
+    messages %}
+    <ul class="messages">
+      {% for category, message in messages %}
+      <li class="message {{ category }}">{{ message }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %} {% endwith %}
 
-        <!-- Etiquetas del meme -->
-        <label for="etiquetas" class="block text-xl">Etiquetas (separadas por coma)</label>
-        <input type="text" id="etiquetas" name="etiquetas" class="p-2 border border-gray-300 rounded mt-2 mb-4 w-full" required>
+    <!-- Botón para enviar el formulario -->
+    <div class="text-center">
+      <button type="submit" class="btn btn-primary">Crear Meme</button>
+    </div>
+  </form>
+</div>
 
-        <!-- Confianza de las etiquetas -->
-        <label for="confianza" class="block text-xl">Confianza (valores entre 0 y 100, separados por coma)</label>
-        <input type="text" id="confianza" name="confianza" class="p-2 border border-gray-300 rounded mt-2 mb-4 w-full" required>
+<script>
+  // Función para manejar el ingreso de etiquetas y convertirlas en chips
+  function handleTagInput(event) {
+    const input = event.target;
+    const value = input.value;
 
-        <!-- Botón para enviar el formulario -->
-        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md">Crear Meme</button>
-    </form>
+    // Si el usuario presiona coma o Enter
+    if (event.key === "," || event.key === "Enter") {
+      // Evitar que se envíe el formulario si se presiona Enter
+      event.preventDefault();
+
+      const tag = value.trim().replace(",", "").toLowerCase();
+
+      if (tag && !isTagAlreadyAdded(tag)) {
+        addTag(tag);
+        input.value = ""; // Limpiar el campo de entrada
+      }
+    }
+  }
+
+  // Función para agregar la etiqueta como un "chip"
+  function addTag(tag) {
+    const container = document.getElementById("etiquetas-container");
+
+    // Crear el div para el "chip"
+    const tagElement = document.createElement("div");
+    tagElement.textContent = tag;
+    tagElement.classList.add("badge", "bg-secondary", "me-2", "p-2"); // Usar las clases de Bootstrap para estilo
+
+    // Crear el botón para eliminar la etiqueta
+    const removeButton = document.createElement("span");
+    removeButton.textContent = "x";
+    removeButton.classList.add("ms-2", "cursor-pointer", "badge", "bg-danger"); // Usar las clases de Bootstrap para el botón de eliminar
+
+    // Eliminar la etiqueta al hacer clic en el "x"
+    removeButton.onclick = () => {
+      tagElement.remove();
+      updateHiddenTagInput();
+    };
+
+    // Agregar el botón de eliminar al chip
+    tagElement.appendChild(removeButton);
+
+    // Agregar el "chip" al contenedor
+    container.appendChild(tagElement);
+
+    // Actualizar el input oculto para reflejar las etiquetas añadidas
+    updateHiddenTagInput();
+  }
+
+  // Función para actualizar el valor del campo de entrada oculto para las etiquetas
+  function updateHiddenTagInput() {
+    const tags = [];
+    const tagElements = document.querySelectorAll(
+      "#etiquetas-container .badge.bg-secondary"
+    );
+    tagElements.forEach((tagElement) => {
+      tags.push(tagElement.textContent.replace("x", "").trim());
+    });
+    document.getElementById("etiquetas").value = tags.join(","); // Actualiza el campo de etiquetas con las etiquetas añadidas
+  }
+
+  // Función para verificar si la etiqueta ya fue añadida
+  function isTagAlreadyAdded(tag) {
+    const existingTags = Array.from(
+      document.querySelectorAll("#etiquetas-container .badge.bg-secondary")
+    ).map((tagElement) =>
+      tagElement.textContent.replace("x", "").trim().toLowerCase()
+    );
+    return existingTags.includes(tag.toLowerCase());
+  }
+</script>
 {% endblock %}
