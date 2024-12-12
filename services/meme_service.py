@@ -1,7 +1,8 @@
 from connections.db_connection import create_db_connection
-# meme_service.py
-from services.s3_service import get_images_from_s3
-
+from services.s3_service import get_images_from_s3, upload_image_to_s3
+from werkzeug.utils import secure_filename
+import os
+from datetime import datetime
 
 def get_all_memes():
     """
@@ -17,10 +18,9 @@ def get_all_memes():
             rows = cursor.fetchall()
             columns = [desc[0] for desc in cursor.description]
             memes = [dict(zip(columns, row)) for row in rows]
-            
-            # Aquí obtenemos la URL completa para cada imagen desde S3
+
             for meme in memes:
-                meme['ruta'] = get_images_from_s3(meme['ruta'])  # Asumiendo que 'ruta' contiene la ruta en S3
+                meme['ruta'] = get_images_from_s3(meme['ruta'])
             return memes
     except Exception as e:
         print(f"Error al obtener los memes: {e}")
@@ -49,22 +49,45 @@ def get_meme_by_id(meme_id):
         connection.close()
 
 
-def create_meme(descripcion, usuario, ruta, cargada):
+def create_meme(descripcion, usuario, image, cargada, etiquetas):
     """
-    Crea un nuevo meme en la tabla 'memes'.
+    Crea un nuevo meme en la tabla 'memes' y la relación correspondiente en 'etiquetas'.
     """
     connection = create_db_connection()
     if connection is None:
         return None
 
     try:
+        temp_folder = os.path.join(os.getcwd(), 'temp')
+        if not os.path.exists(temp_folder):
+            os.makedirs(temp_folder)
+
+        filename = secure_filename(image.filename)
+        image_path = os.path.join(temp_folder, filename)
+        image.save(image_path)
+
+        ruta = upload_image_to_s3(image_path, 'starter-aws-app')
+        if ruta is None:
+            return None
+        
+        if not isinstance(cargada, datetime):
+            cargada = datetime.now()
+
         with connection.cursor() as cursor:
             cursor.execute(
                 "INSERT INTO memes (descripcion, usuario, ruta, cargada) VALUES (%s, %s, %s, %s) RETURNING id;",
                 (descripcion, usuario, ruta, cargada)
             )
-            meme_id = cursor.fetchone()[0]  # Obtiene el ID del nuevo meme insertado
+            meme_id = cursor.fetchone()[0]
             connection.commit()
+
+            for etiqueta, confianza in etiquetas:
+                cursor.execute(
+                    "INSERT INTO etiquetas (meme_id, etiqueta, confianza) VALUES (%s, %s, %s);",
+                    (meme_id, etiqueta, confianza)
+                )
+            connection.commit()
+
             return meme_id
     except Exception as e:
         print(f"Error al crear el meme: {e}")

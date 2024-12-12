@@ -5,16 +5,41 @@
 
 {% block content %}
     <h2 class="text-3xl font-bold">Crear Meme</h2>
-    <form>
+
+    <!-- Formulario para crear un meme -->
+    <form action="{{ url_for('memes_routes.crear') }}" method="POST" enctype="multipart/form-data">
+        <!-- Mensajes flash para mostrar éxito o error -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="flashes">
+                    {% for category, message in messages %}
+                        <li class="{{ category }}">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Descripción del meme -->
         <label for="descripcion" class="block text-xl">Descripción</label>
-        <input type="text" id="descripcion" class="p-2 border border-gray-300 rounded mt-2 mb-4 w-full">
+        <input type="text" id="descripcion" name="descripcion" class="p-2 border border-gray-300 rounded mt-2 mb-4 w-full" required>
 
-        <label for="ruta" class="block text-xl">Ruta de imagen</label>
-        <input type="text" id="ruta" class="p-2 border border-gray-300 rounded mt-2 mb-4 w-full">
+        <!-- Usuario del meme -->
+        <label for="usuario" class="block text-xl">Usuario</label>
+        <input type="text" id="usuario" name="usuario" class="p-2 border border-gray-300 rounded mt-2 mb-4 w-full" required>
 
-        <label for="cargada" class="block text-xl">Fecha de carga</label>
-        <input type="datetime-local" id="cargada" class="p-2 border border-gray-300 rounded mt-2 mb-4 w-full">
+        <!-- Imagen del meme -->
+        <label for="imagen" class="block text-xl">Subir Imagen</label>
+        <input type="file" id="imagen" name="imagen" class="p-2 border border-gray-300 rounded mt-2 mb-4 w-full" accept="image/*" required>
 
+        <!-- Etiquetas del meme -->
+        <label for="etiquetas" class="block text-xl">Etiquetas (separadas por coma)</label>
+        <input type="text" id="etiquetas" name="etiquetas" class="p-2 border border-gray-300 rounded mt-2 mb-4 w-full" required>
+
+        <!-- Confianza de las etiquetas -->
+        <label for="confianza" class="block text-xl">Confianza (valores entre 0 y 100, separados por coma)</label>
+        <input type="text" id="confianza" name="confianza" class="p-2 border border-gray-300 rounded mt-2 mb-4 w-full" required>
+
+        <!-- Botón para enviar el formulario -->
         <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md">Crear Meme</button>
     </form>
 {% endblock %}
