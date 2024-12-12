@@ -1,16 +1,30 @@
-<!-- /index.html (Archivo principal de entrada) -->
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MemesApp</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.0.0/dist/tailwind.min.css" rel="stylesheet">
-</head>
-<body>
-    <h1 class="text-4xl font-bold text-center mt-10">Bienvenido a MemesApp</h1>
-    <div class="text-center mt-4">
-        <a href="memes" class="bg-blue-600 text-white px-6 py-3 rounded-md">Ir a la Página Principal</a>
+{% extends 'pages/layout/navbar.html' %}
+
+{% block title %}Página Principal - MemesApp{% endblock %}
+
+{% block content %}
+<div class="container" style="margin: 32px;">
+    {% include 'components/search_component.html' %}
+    <h1>Lista de Memes</h1>
+    {% if memes %}
+    <div class="row row-cols-1 row-cols-md-5" style="gap: 16px;">
+        {% for meme in memes %}
+        <div class="col">
+            <div class="card" style="width: 100%; margin-bottom: 16px;">
+                <img src="{{ meme.ruta }}" class="card-img-top" alt="Imagen del Meme" style="height: 200px; object-fit: cover;">
+                <div class="card-body">
+                    <h5 class="card-title">ID: {{ meme.id }}</h5>
+                    <p class="card-text">{{ meme.descripcion }}</p>
+                    <p class="card-text"><strong>Usuario:</strong> {{ meme.usuario }}</p>
+                    <p class="card-text"><strong>Fecha de Carga:</strong> {{ meme.cargada }}</p>
+                    <a href="{{ meme.ruta }}" class="btn btn-primary" target="_blank">Ver Imagen</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
     </div>
-</body>
-</html>
+    {% else %}
+    <p>No hay memes disponibles.</p>
+    {% endif %}
+</div>
+{% endblock %}
