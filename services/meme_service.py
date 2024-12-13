@@ -15,6 +15,7 @@ def get_db_connection():
 # Función para obtener las etiquetas y confianza de la imagen usando Imagga
 def get_etiquetas_imagga(image_path):
     etiquetas_imagga = analyze_image_with_imagga(image_path)
+    print(f"Etiquetas Imagga: {etiquetas_imagga}")
     return etiquetas_imagga
 
 # Función para combinar etiquetas de usuario y etiquetas de Imagga
@@ -147,7 +148,13 @@ def get_all_memes():
 
 # Función para buscar memes
 def search_memes(query):
-    connection = get_db_connection()
+    """
+    Filtra los memes según los criterios de búsqueda proporcionados.
+    """
+    connection = create_db_connection()
+    if connection is None:
+        return []
+
     try:
         with connection.cursor() as cursor:
             base_query = """
@@ -183,6 +190,7 @@ def search_memes(query):
             for row in rows:
                 meme_data = dict(zip(columns, row))
                 meme_id = meme_data["meme_id"]
+                print(f"Procesando meme con id: {meme_id}")
 
                 meme = next((m for m in memes if m["meme_id"] == meme_id), None)
 
@@ -204,8 +212,11 @@ def search_memes(query):
                 if meme_data["confianza"] is not None:
                     meme["confianza"][meme_data["etiqueta"]] = meme_data["confianza"]
 
+            # Aquí puedes filtrar los memes según el query y devolver los resultados completos
             return memes
     except Exception as e:
+        print(f"Error al buscar los memes: {e}")
         return []
     finally:
         connection.close()
+

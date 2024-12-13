@@ -8,18 +8,27 @@
     <h1>Lista de Memes</h1>
     
     {% if memes %}
-        <div class="row row-cols-1 row-cols-md-5" style="gap: 16px;">
+        <div class="row row-cols-1 row-cols-md-4 row-cols-lg-3" style="gap: 16px;">
             {% for meme in memes %}
                 <div class="col">
-                    <div class="card" style="width: 100%; margin-bottom: 16px;">
-                        <img src="{{ meme.ruta }}" class="card-img-top" alt="Imagen del Meme" style="height: 200px; object-fit: cover;">
-                        <div class="card-body">
+                    <div class="card" style="max-width: 400px; width: 100%; margin-bottom: 16px; display: flex; flex-direction: column;">
+                        <!-- Imagen del meme ajustada al card -->
+                        <img src="{{ meme.ruta }}" class="card-img-top" alt="Imagen del Meme" style="height: auto; width: 100%; object-fit: cover;">
+                        <div class="card-body" style="flex-grow: 1; display: flex; flex-direction: column;">
                             <p class="card-text">
                                 <strong>Etiquetas:</strong>
                                 {% if meme.etiquetas %}
-                                    <div style="display: flex; flex-wrap: wrap;">
+                                    <div style="display: flex; flex-wrap: wrap; gap: 8px; overflow: hidden;">
                                         {% for etiqueta in meme.etiquetas %}
-                                            <span class="badge badge-pill" style="margin-right: 5px; background-color: {{ ['#007bff', '#28a745', '#ffc107', '#17a2b8'][loop.index0 % 4] }}; color: white; padding: 5px 10px; border-radius: 20px;">
+                                            <span class="badge badge-pill" 
+                                                  style="background-color: {{ ['#007bff', '#28a745', '#ffc107', '#17a2b8'][loop.index0 % 4] }}; 
+                                                         color: white; 
+                                                         padding: 5px 10px; 
+                                                         border-radius: 20px; 
+                                                         margin-right: 5px; 
+                                                         white-space: nowrap; 
+                                                         overflow: hidden; 
+                                                         text-overflow: ellipsis;">
                                                 {{ etiqueta }} 
                                                 {% if meme.confianza[etiqueta] is not none %}
                                                     (Confianza: {{ meme.confianza[etiqueta] }})
@@ -32,7 +41,8 @@
                                 {% else %}
                                     <span>No hay etiquetas.</span>
                                 {% endif %}
-                            </p>                            
+                            </p>
+
                             <p class="card-text"><strong>Descripción:</strong> {{ meme.descripcion }}</p>
                             <p class="card-text"><strong>Usuario:</strong> {{ meme.usuario }}</p>
                             <p class="card-text"><strong>Fecha de Carga:</strong> {{ meme.cargada }}</p>
