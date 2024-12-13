@@ -21,19 +21,14 @@ def home():
 
     return render_template('index.html', memes=memes)
 
-
-
 @memes_routes.route('/crear', methods=['GET', 'POST'])
 def crear():
     if request.method == 'POST':
-        # Recoger los datos del formulario
         descripcion = request.form['descripcion']
         usuario = request.form['usuario']
         imagen_file = request.files['imagen']
         etiquetas = request.form['etiquetas'].split(',')
-        confianza = list(map(int, request.form['confianza'].split(',')))
-
-        meme_id = create_meme(descripcion, usuario, imagen_file, True, list(zip(etiquetas, confianza)))
+        meme_id = create_meme(descripcion, usuario, imagen_file, True, etiquetas)
 
         if meme_id:
             flash('Meme creado con éxito', 'success')
