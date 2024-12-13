@@ -5,14 +5,95 @@ import os
 from datetime import datetime
 from services.imagga_service import analyze_image_with_imagga
 
-def get_all_memes():
-    """
-    Obtiene todos los memes de la base de datos, sus etiquetas, confianza, y les asigna la URL completa de la imagen desde S3.
-    """
+# Función para obtener la conexión a la base de datos
+def get_db_connection():
     connection = create_db_connection()
     if connection is None:
-        return []
+        raise Exception("Error al conectar con la base de datos")
+    return connection
 
+# Función para obtener las etiquetas y confianza de la imagen usando Imagga
+def get_etiquetas_imagga(image_path):
+    etiquetas_imagga = analyze_image_with_imagga(image_path)
+    return etiquetas_imagga
+
+# Función para combinar etiquetas de usuario y etiquetas de Imagga
+def combine_etiquetas(etiquetas_usuario, etiquetas_imagga):
+    etiquetas_completas = [(etiqueta, None) for etiqueta in etiquetas_usuario] + \
+                          [(etiqueta, confianza) for etiqueta, confianza in etiquetas_imagga]
+    return etiquetas_completas
+
+# Función para guardar la imagen en una carpeta temporal
+def save_image_temp(image):
+    temp_folder = os.path.join(os.getcwd(), 'temp')
+    if not os.path.exists(temp_folder):
+        os.makedirs(temp_folder)
+
+    filename = secure_filename(image.filename)
+    image_path = os.path.join(temp_folder, filename)
+    image.save(image_path)
+    return image_path
+
+# Función para insertar meme en la base de datos
+def insert_meme(connection, descripcion, usuario, ruta, cargada):
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "INSERT INTO memes (descripcion, usuario, ruta, cargada) VALUES (%s, %s, %s, %s) RETURNING id;",
+            (descripcion, usuario, ruta, cargada)
+        )
+        meme_id = cursor.fetchone()[0]  # Obtener el ID del meme insertado
+        connection.commit()
+    return meme_id
+
+# Función para insertar etiquetas en la base de datos
+def insert_etiquetas(connection, meme_id, etiquetas_completas):
+    with connection.cursor() as cursor:
+        for etiqueta, confianza in etiquetas_completas:
+            cursor.execute(
+                "INSERT INTO etiquetas (meme_id, etiqueta, confianza) VALUES (%s, %s, %s);",
+                (meme_id, etiqueta, confianza)
+            )
+        connection.commit()
+
+# Función principal para crear un meme
+def create_meme(descripcion, usuario, image, cargada, etiquetas_usuario):
+    try:
+        connection = get_db_connection()
+
+        # Guardar la imagen en un archivo temporal
+        image_path = save_image_temp(image)
+
+        # Analizar la imagen con Imagga
+        etiquetas_imagga = get_etiquetas_imagga(image_path)
+
+        # Combinar etiquetas de usuario y de Imagga
+        etiquetas_completas = combine_etiquetas(etiquetas_usuario, etiquetas_imagga)
+
+        # Subir la imagen a S3
+        ruta = upload_image_to_s3(image_path, 'starter-aws-app')
+        if ruta is None:
+            print("Error: No se pudo subir la imagen a S3.")
+            return None
+
+        if not isinstance(cargada, datetime):
+            cargada = datetime.now()
+
+        # Insertar el meme en la base de datos
+        meme_id = insert_meme(connection, descripcion, usuario, ruta, cargada)
+
+        # Insertar las etiquetas en la base de datos
+        insert_etiquetas(connection, meme_id, etiquetas_completas)
+
+        return meme_id
+    except Exception as e:
+        print(f"Error al crear el meme: {e}")
+        return None
+    finally:
+        connection.close()
+
+# Función para obtener todos los memes
+def get_all_memes():
+    connection = get_db_connection()
     try:
         with connection.cursor() as cursor:
             query = """
@@ -31,14 +112,14 @@ def get_all_memes():
             rows = cursor.fetchall()
 
             columns = [desc[0] for desc in cursor.description]
-            
+
             memes = []
             for row in rows:
                 meme_data = dict(zip(columns, row))
                 meme_id = meme_data["meme_id"]
-                
+
                 meme = next((m for m in memes if m["meme_id"] == meme_id), None)
-                
+
                 if meme is None:
                     meme = {
                         "meme_id": meme_id,
@@ -50,11 +131,10 @@ def get_all_memes():
                         "confianza": {}
                     }
                     memes.append(meme)
-                
-                # Asociar las etiquetas y la confianza
+
                 if meme_data["etiqueta"]:
                     meme["etiquetas"].append(meme_data["etiqueta"])
-                
+
                 if meme_data["confianza"] is not None:
                     meme["confianza"][meme_data["etiqueta"]] = meme_data["confianza"]
 
@@ -65,16 +145,9 @@ def get_all_memes():
     finally:
         connection.close()
 
-
-
+# Función para buscar memes
 def search_memes(query):
-    """
-    Filtra los memes según los criterios de búsqueda proporcionados.
-    """
-    connection = create_db_connection()
-    if connection is None:
-        return []
-
+    connection = get_db_connection()
     try:
         with connection.cursor() as cursor:
             base_query = """
@@ -110,7 +183,6 @@ def search_memes(query):
             for row in rows:
                 meme_data = dict(zip(columns, row))
                 meme_id = meme_data["meme_id"]
-                print(f"Procesando meme con id: {meme_id}")
 
                 meme = next((m for m in memes if m["meme_id"] == meme_id), None)
 
@@ -135,71 +207,5 @@ def search_memes(query):
             return memes
     except Exception as e:
         return []
-    finally:
-        connection.close()
-
-
-
-def create_meme(descripcion, usuario, image, cargada, etiquetas_usuario):
-    """
-    Crea un nuevo meme en la tabla 'memes' y la relación correspondiente en 'etiquetas', 
-    añadiendo las etiquetas proporcionadas por el usuario junto con las obtenidas mediante la API de Imagga.
-    """
-    connection = create_db_connection()
-    if connection is None:
-        return None
-
-    try:
-        temp_folder = os.path.join(os.getcwd(), 'temp')
-        if not os.path.exists(temp_folder):
-            os.makedirs(temp_folder)
-
-        filename = secure_filename(image.filename)
-        image_path = os.path.join(temp_folder, filename)
-        image.save(image_path)
-
-        # Analizar la imagen con Imagga y obtener las etiquetas
-        etiquetas_imagga = analyze_image_with_imagga(image_path)
-
-        # Combinar las etiquetas del usuario con las etiquetas de Imagga
-        etiquetas_completas = [(etiqueta, None) for etiqueta in etiquetas_usuario] + \
-                              [(etiqueta, confianza) for etiqueta, confianza in etiquetas_imagga]  # Etiquetas del usuario y de Imagga
-        
-        # Verificar que hay etiquetas para asociar con el meme
-        if not etiquetas_completas:
-            print("Error: No hay etiquetas disponibles para asociar con el meme.")
-            return None
-
-        # Subir la imagen a S3
-        ruta = upload_image_to_s3(image_path, 'starter-aws-app')
-        if ruta is None:
-            print("Error: No se pudo subir la imagen a S3.")
-            return None
-        
-        if not isinstance(cargada, datetime):
-            cargada = datetime.now()
-
-        with connection.cursor() as cursor:
-            # Insertar el meme en la base de datos
-            cursor.execute(
-                "INSERT INTO memes (descripcion, usuario, ruta, cargada) VALUES (%s, %s, %s, %s) RETURNING id;",
-                (descripcion, usuario, ruta, cargada)
-            )
-            meme_id = cursor.fetchone()[0]  # Obtener el ID del meme insertado
-            connection.commit()
-
-            # Insertar las etiquetas en la tabla 'etiquetas', con la confianza proporcionada por Imagga
-            for etiqueta, confianza in etiquetas_completas:
-                cursor.execute(
-                    "INSERT INTO etiquetas (meme_id, etiqueta, confianza) VALUES (%s, %s, %s);",
-                    (meme_id, etiqueta, confianza)
-                )
-            connection.commit()
-
-            return meme_id
-    except Exception as e:
-        print(f"Error al crear el meme: {e}")
-        connection.rollback()
-        return None
     finally:
         connection.close()
