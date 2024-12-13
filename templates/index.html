@@ -8,10 +8,10 @@
     <h1>Lista de Memes</h1>
     
     {% if memes %}
-        <div class="row row-cols-1 row-cols-md-4 row-cols-lg-3" style="gap: 16px;">
+        <div class="row" style="display: flex; flex-wrap: wrap; gap: 16px;">
             {% for meme in memes %}
-                <div class="col">
-                    <div class="card" style="max-width: 400px; width: 100%; margin-bottom: 16px; display: flex; flex-direction: column;">
+                <div class="col-12 col-sm-6 col-md-4 col-lg-3" style="max-width: 400px; flex: 1 0 21%; margin-bottom: 16px;">
+                    <div class="card" style="display: flex; flex-direction: column; height: 100%;">
                         <!-- Imagen del meme ajustada al card -->
                         <img src="{{ meme.ruta }}" class="card-img-top" alt="Imagen del Meme" style="height: auto; width: 100%; object-fit: cover;">
                         <div class="card-body" style="flex-grow: 1; display: flex; flex-direction: column;">
