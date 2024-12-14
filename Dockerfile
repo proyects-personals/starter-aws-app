@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y libpq-dev
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copia el archivo .env (asegúrate de que el archivo .env esté en la misma carpeta que tu Dockerfile)
+# Copia el archivo .env
 COPY .env .env
 
 # Copia el resto de los archivos del proyecto
